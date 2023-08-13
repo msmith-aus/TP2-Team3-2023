@@ -91,7 +91,7 @@ if __name__ == "__main__":
         segments = len(artworks[artwork])
         points = sum(artworks[artwork][seg].size() for seg in range(len(artworks[artwork])))
         length = sum(artworks[artwork][seg].stroke_length() for seg in range(len(artworks[artwork])))
-        print(f'\n\n{artwork}  \n Segments: {segments} \n Points: {points} \n Total stroke length (mm): {length} \n Average stroke length (mm): {round(length/segments, 6)} \n Non-drawing movement (mm): {non_drawing_movements[artwork]}')
+        print(f'\n\n{artwork}  \n Segments: {segments} \n Points: {points} \n Total stroke length (mm): {round(length,6)} \n Average stroke length (mm): {round(length/segments, 6)} \n Non-drawing movement (mm): {round(non_drawing_movements[artwork],6)}')
     
     artist = Drawer(artworks)
     artist.draw_artworks()
