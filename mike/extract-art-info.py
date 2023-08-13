@@ -40,9 +40,10 @@ class Drawer():
             for segment in self.artworks[artwork]:
                 x_coords, y_coords = zip(*segment.points)
                 plt.plot(x_coords, y_coords)
-            plt.title(artwork)
-            plt.savefig(fname=artwork.split('.')[0])
-        plt.show()
+            artwork_name = artwork.split('/')[5].split('.')[0]
+            plt.title(artwork_name)
+            plt.savefig(fname="/home/stiff/tp2-2023/mike/images/"+artwork_name)
+        #plt.show()
 
 def read_in_artworks(filename):
     with open(filename, 'r') as file:
@@ -68,13 +69,29 @@ def read_in_artworks(filename):
 
 
 if __name__ == "__main__":
-    artworks = {path: read_in_artworks(path) for path in glob.glob("/home/stiff/tp2-2023/*.txt")}
+    HOME = (0,0)
+
+    artworks = {path: read_in_artworks(path) for path in glob.glob("/home/stiff/tp2-2023/mike/artwork-files/*.txt")}
+
+    non_drawing_movements = {artwork: None for artwork in artworks}
+
+    for artwork in artworks:
+        distance = 0
+        # HOME to the first point in the first segment
+        distance += math.dist(HOME, artworks[artwork][0].points[0])
+        # Adding up the distances between the last point in one section to the first point in the next section
+        for seg in range(1,len(artworks[artwork])):
+            distance += math.dist(artworks[artwork][seg-1].points[-1], artworks[artwork][seg].points[0])
+
+        # From the last point of the last segment back to HOME
+        distance += math.dist(HOME, artworks[artwork][-1].points[-1])
+        non_drawing_movements[artwork] = distance
 
     for artwork in artworks:
         segments = len(artworks[artwork])
         points = sum(artworks[artwork][seg].size() for seg in range(len(artworks[artwork])))
         length = sum(artworks[artwork][seg].stroke_length() for seg in range(len(artworks[artwork])))
-        print(f'{artwork}  \n Segments: {segments} \n Points: {points} \n Total stroke length (mm): {length}')
+        print(f'{artwork}  \n Segments: {segments} \n Points: {points} \n Total stroke length (mm): {length} \n Average stroke length (mm): {round(length/segments, 6)} \n Non-drawing movement (mm): {non_drawing_movements[artwork]}')
     
     artist = Drawer(artworks)
     artist.draw_artworks()
