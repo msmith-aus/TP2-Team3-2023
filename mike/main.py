@@ -1,28 +1,85 @@
 from machine import Pin
 from time import sleep, sleep_ms
-from motor import Motor, init_pins, POS_XY, NEG_XY, STEPS_PER_REV_XY
+from motor import Motor, init_pins, POS_XY, NEG_XY, STEPS_PER_REV_XY, NEG_Z, POS_Z, STEPS_PER_REV_Z
 
 
-# def loop(motor_x: Motor, motor_y: Motor, motor_z: Motor, led):
-#     while True:
-#         # Move X Up and Back ###
-#         motor_x.step_motor(POS_XY, STEPS_PER_REV_XY)
-#         motor_x.step_motor(NEG_XY, STEPS_PER_REV_XY)
-#         sleep(1)
-#         led.toggle()
-#         sleep_ms(200)
-#         led.toggle()
+
+def draw_square(motor_x: Motor, motor_y: Motor, motor_z: Motor, led):
+    x_steps = 0
+    y_steps = 0
+
+    motor_z.enable()
+    motor_z.step_motor(NEG_Z, 20) # pen up
+    sleep_ms(500)
+
+    # Move to start of drawing
+    motor_x.enable()
+    motor_x.step_motor(POS_XY, 20)
+    sleep_ms(500)
+    motor_y.enable()
+    motor_y.step_motor(POS_XY, 20)
+    sleep_ms(500)
+    motor_z.step_motor(POS_Z, 20)
+    sleep_ms(500)
+    # draw square
+    motor_x.step_motor(POS_XY, 8000)
+    motor_y.step_motor(POS_XY, 8000)
+    motor_x.step_motor(NEG_XY, 8000)
+    motor_y.step_motor(NEG_XY, 8000)
+
+    sleep_ms(500)
+    motor_z.step_motor(NEG_Z, 20)
+    sleep_ms(500)
+    motor_x.step_motor(NEG_XY, 20)
+    sleep_ms(500)
+    motor_y.step_motor(NEG_XY,20)
+
+    motor_x.disable()
+    motor_y.disable()
+    motor_z.disable()
 
 
-# if __name__ == "__main__":
-#     led = Pin(25, Pin.OUT)
-#     motor_x: Motor = Motor()
-#     motor_y: Motor = Motor()
-#     motor_z: Motor = Motor()
-#     init_pins(motor_x, motor_y, motor_z)
-#     motor_x.enable()
 
-#     loop(motor_x, motor_y, motor_z, led)
+def loop(motor_x: Motor, motor_y: Motor, motor_z: Motor, led):
+    while True:
+        # Move X Up and Back ###
+        # motor_z.enable()
+        # motor_z.step_motor(POS_XY, STEPS_PER_REV_XY)
+        # motor_z.step_motor(NEG_XY, STEPS_PER_REV_XY)
+        # print("Motor X EN: ", motor_x._enable.value(), "Motor Y EN: ", motor_y._enable.value(), "Motor Z EN: ", motor_z._enable.value())
+        # motor_z.disable()
+        # motor_z.step_motor(POS_XY, STEPS_PER_REV_XY)
+        # motor_z.step_motor(NEG_XY, STEPS_PER_REV_XY)
+        # print("Motor X EN: ", motor_x._enable.value(), "Motor Y EN: ", motor_y._enable.value(), "Motor Z EN: ", motor_z._enable.value())
+        # sleep(1)
+        # led.toggle()
+        # sleep_ms(200)
+        # led.toggle()
+
+        motor_z.enable()
+        motor_z.step_motor(POS_Z, STEPS_PER_REV_Z)
+        motor_z.step_motor(NEG_Z, STEPS_PER_REV_Z)
+        print("Motor X EN: ", motor_x._enable.value(), "Motor Y EN: ", motor_y._enable.value(), "Motor Z EN: ", motor_z._enable.value())
+        motor_z.disable()
+        motor_z.step_motor(POS_Z, STEPS_PER_REV_Z)
+        motor_z.step_motor(NEG_Z, STEPS_PER_REV_Z)
+        print("Motor X EN: ", motor_x._enable.value(), "Motor Y EN: ", motor_y._enable.value(), "Motor Z EN: ", motor_z._enable.value())
+        sleep(1)
+        led.toggle()
+        sleep_ms(200)
+        led.toggle()
+
+
+if __name__ == "__main__":
+    led = Pin(25, Pin.OUT)
+    motor_x: Motor = Motor()
+    motor_y: Motor = Motor()
+    motor_z: Motor = Motor()
+    init_pins(motor_x, motor_y, motor_z)
+    
+    
+    # loop(motor_x, motor_y, motor_z, led)
+    draw_square(motor_x, motor_y, motor_z, led)
 
     # # Enable motors
     # enable_motors()
@@ -60,44 +117,3 @@ from motor import Motor, init_pins, POS_XY, NEG_XY, STEPS_PER_REV_XY
     # led.value(1) # pen down
     # utime.sleep_ms(250)
     # led.toggle()
-
-from machine import Pin, Timer
-import utime
- 
-dir_pin = Pin(20, Pin.OUT)
-step_pin = Pin(21, Pin.OUT)
-steps_per_revolution = 400
- 
-# Initialize timer
-tim = Timer()
- 
-def step(t):
-    global step_pin
-    step_pin.value(not step_pin.value())
- 
-def rotate_motor(delay):
-    # Set up timer for stepping
-    tim.init(freq=1000000//delay, mode=Timer.PERIODIC, callback=step)
- 
-def loop():
-    while True:
-        # Set motor direction clockwise
-        dir_pin.value(0)
- 
-        # Spin motor slowly
-        rotate_motor(2000)
-        utime.sleep_ms(steps_per_revolution)
-        tim.deinit()  # stop the timer
-        utime.sleep(1)
- 
-        # Set motor direction counterclockwise
-        dir_pin.value(0)
- 
-        # Spin motor quickly
-        rotate_motor(1000)
-        utime.sleep_ms(steps_per_revolution)
-        tim.deinit()  # stop the timer
-        utime.sleep(1)
- 
-if __name__ == '__main__':
-    loop()

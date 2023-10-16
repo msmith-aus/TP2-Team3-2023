@@ -9,9 +9,9 @@ MOTOR_X_STEP = 21  # Pin to pulse for each step
 MOTOR_X_DIR = 20  # Clockwise/ anit-clockwise ()
 ### Y ###
 
-MOTOR_Y_EN = 28
-MOTOR_Y_STEP = 21
-MOTOR_Y_DIR = 20
+MOTOR_Y_EN = 13
+MOTOR_Y_STEP = 9
+MOTOR_Y_DIR = 8
 ### Z ###
 
 MOTOR_Z_EN = 5
@@ -21,9 +21,9 @@ MOTOR_Z_DIR = 0
 ### CONSTANTS ###
 STEPS_PER_REV_XY = 400  # 0.9 degress
 STEPS_PER_REV_Z = 200
-PITCH = 1  # 1mm
-LINEAR_STEP_XY = PITCH / STEPS_PER_REV_XY  # 0.0025 mm/step
-LINEAR_STEP_Z = PITCH / STEPS_PER_REV_Z  # 0.005 mm/step
+PITCH = 0.5  # 0.5 mm
+LINEAR_STEP_XY = PITCH / STEPS_PER_REV_XY  # 0.000125 mm/step
+LINEAR_STEP_Z = PITCH / STEPS_PER_REV_Z  # 0.0025 mm/step
 
 ### Direction mapping for postive and negative xyz motion on the canvas
 POS_XY = 0 
@@ -32,8 +32,8 @@ POS_Z = 1
 NEG_Z = 0
 
 ### Pulse definition ###
-STEP_PERIOD = 500  # us
-MOTOR_PULSE_PERIOD = 1000  # us pps
+STEP_PERIOD = 150  # us
+MOTOR_PULSE_PERIOD = 600  # us pps
 
 
 X_POS = 0
@@ -60,6 +60,7 @@ class Motor:
 
     def step_motor(self, direction: int, steps: int):
         self._direction.value(direction)
+
         for _ in range(steps):
             self._step.value(1)
             sleep_us(STEP_PERIOD)
@@ -71,9 +72,12 @@ def init_pins(motor_x: Motor, motor_y: Motor, motor_z: Motor):
     motor_x._enable = Pin(MOTOR_X_EN, Pin.OUT)
     motor_x._step = Pin(MOTOR_X_STEP, Pin.OUT)
     motor_x._direction = Pin(MOTOR_X_DIR, Pin.OUT)
-    motor_y._enable = Pin(MOTOR_X_EN, Pin.OUT)
-    motor_y._step = Pin(MOTOR_X_STEP, Pin.OUT)
-    motor_y._direction = Pin(MOTOR_X_DIR, Pin.OUT)
-    motor_z._enable = Pin(MOTOR_X_EN, Pin.OUT)
-    motor_z._step = Pin(MOTOR_X_STEP, Pin.OUT)
-    motor_z._direction = Pin(MOTOR_X_DIR, Pin.OUT)
+    motor_y._enable = Pin(MOTOR_Y_EN, Pin.OUT)
+    motor_y._step = Pin(MOTOR_Y_STEP, Pin.OUT)
+    motor_y._direction = Pin(MOTOR_Y_DIR, Pin.OUT)
+    motor_z._enable = Pin(MOTOR_Z_EN, Pin.OUT)
+    motor_z._step = Pin(MOTOR_Z_STEP, Pin.OUT)
+    motor_z._direction = Pin(MOTOR_Z_DIR, Pin.OUT)
+    motor_x.disable()
+    motor_y.disable()
+    motor_z.disable()
