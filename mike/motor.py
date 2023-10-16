@@ -31,6 +31,8 @@ NEG_XY = 1
 POS_Z = 1
 NEG_Z = 0
 
+XY_CORRECTION = -1
+
 ### Pulse definition ###
 STEP_PERIOD = 150  # us
 MOTOR_PULSE_PERIOD = 600  # us pps
@@ -46,7 +48,7 @@ class Motor:
         self._enable = None
         self._step = None
         self._direction = None
-        self._positon = None
+        self._positon = 0
 
     def enable(self):
         self._enable.value(0)
@@ -66,6 +68,7 @@ class Motor:
             sleep_us(STEP_PERIOD)
             self._step.value(0)
             sleep_us(MOTOR_PULSE_PERIOD)
+            self._positon +=  -(2*direction-1)
 
 
 def init_pins(motor_x: Motor, motor_y: Motor, motor_z: Motor):
@@ -81,3 +84,21 @@ def init_pins(motor_x: Motor, motor_y: Motor, motor_z: Motor):
     motor_x.disable()
     motor_y.disable()
     motor_z.disable()
+
+
+def out_and_back(motor: Motor, led):
+    while True:
+        # Move X Up and Back ###
+        motor.enable()
+        motor.step_motor(POS_XY, STEPS_PER_REV_Z)
+        motor.step_motor(NEG_XY, STEPS_PER_REV_Z)
+        print("Motor EN: ", motor._enable.value())
+        motor.disable()
+        motor.step_motor(POS_XY, STEPS_PER_REV_Z)
+        motor.step_motor(NEG_XY, STEPS_PER_REV_Z)
+        print("Motor EN: ", motor._enable.value())
+        sleep(1)
+        led.toggle()
+        sleep_ms(200)
+        led.toggle()
+

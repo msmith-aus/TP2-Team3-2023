@@ -1,34 +1,49 @@
-
+from util import Artwork
+from motor import *
+from time import sleep_ms
+from util import greatest_common_divisor
 
 class Drawer:
 
-    def __init__(self):
-        pass
-
-    def move_to(x, y):
-        # current position
-        global X_POS, Y_POS
+    def __init__(self, motor_x, motor_y, motor_z, artwork):
+        
+        self.motor_x: Motor = motor_x
+        self.motor_y: Motor = motor_y
+        self.motor_z: Motor = motor_z
+        self.artwork: Artwork = artwork
+    
+    def draw_artwork(self):
+        print("Drawing :)")
+        for segment in self.artwork.segments:
+            self.motor_z.step_motor(NEG_Z, 600) # pen down
+            sleep_ms(500)
+            for point in segment:
+                self.move_to(point[0], point[1])
+            self.motor_z.step_motor(POS_Z, 600)
+            self.move_to(0,0)
+               
+    def move_to(self, x, y):
+        # current position in steps
+        x_pos = self.motor_x._positon 
+        y_pos = self.motor_y._positon
         # target position
-        steps_x = x / LINEAR_STEP
-        steps_y = y / LINEAR_STEP
+        steps_x = x / LINEAR_STEP_XY
+        steps_y = y / LINEAR_STEP_XY
         # delta
-        delta_x = round(steps_x) - X_POS
-        delta_y = round(steps_y) - Y_POS
-
-        X_POS += delta_x
-        Y_POS += delta_y
+        delta_x = round(steps_x) - x_pos
+        delta_y = round(steps_y) - y_pos
 
         # adjust for negative directions
         if delta_x < 0:
             delta_x = -delta_x
-            x_dir = 1
+            x_dir = NEG_XY
         else:
-            x_dir = 0
+            x_dir = POS_XY
         if delta_y < 0:
             delta_y = -delta_y
-            y_dir = 1
+            y_dir = NEG_XY
         else:
-            y_dir = 0
+            y_dir = POS_XY
 
         # Find the smoothest path by linking a series of steps together
         hgd = greatest_common_divisor(delta_x, delta_y)
@@ -43,21 +58,14 @@ class Drawer:
             else:
                 num_stairs = 1
             for _ in range(num_stairs):
-                for _ in range(base):
-                    step_motor("X", x_dir)
-                    utime.sleep_us(STEP_DELAY)
-                for _ in range(height):
-                    step_motor("Y", y_dir)
-                    utime.sleep_us(STEP_DELAY)
+                self.motor_x.step_motor(x_dir, base)
+                self.motor_y.step_motor(y_dir, height)
         elif base < height:
             if height != 0:
                 num_stairs = 1
             else:
-                num_stairs = delta_x // height
+                num_stairs = delta_y // height
             for _ in range(num_stairs):
-                for _ in range(base):
-                    step_motor("X", x_dir)
-                    utime.sleep_us(STEP_DELAY)
-                for _ in range(height):
-                    step_motor("Y", y_dir)
-                    utime.sleep_us(STEP_DELAY)
+                self.motor_x.step_motor(x_dir, base)
+                self.motor_y.step_motor(y_dir, height)
+    
