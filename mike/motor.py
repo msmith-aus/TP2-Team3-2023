@@ -60,15 +60,15 @@ class Motor:
         self._enable.value(1)
         self._enable.value(1)
 
-    def step_motor(self, direction: int, steps: int):
+    def step_motor(self, direction: int, steps: int, pulse_period: int):
         self._direction.value(direction)
 
         for _ in range(steps):
             self._step.value(1)
             sleep_us(STEP_PERIOD)
             self._step.value(0)
-            sleep_us(MOTOR_PULSE_PERIOD)
-            self._positon +=  -(2*direction-1)
+            sleep_us(pulse_period)
+            #self._positon +=  -(2*direction-1)
 
 
 def init_pins(motor_x: Motor, motor_y: Motor, motor_z: Motor):

@@ -1,8 +1,10 @@
-from machine import Pin
-from time import sleep, sleep_ms
-from motor import Motor, init_pins, POS_XY, NEG_XY, STEPS_PER_REV_XY, NEG_Z, POS_Z, STEPS_PER_REV_Z
+#from machine import Pin
+from time import sleep
+from motor import Motor, POS_XY, NEG_XY, STEPS_PER_REV_XY, NEG_Z, POS_Z, STEPS_PER_REV_Z
 from util import Artwork
 from drawer import Drawer
+
+sleep_ms = lambda x: sleep(x*10E-06)
 
 
 
@@ -78,21 +80,18 @@ def read_in_artwork(path):
 
 
 
-if __name__ == "__main__":
-    led = Pin(25, Pin.OUT)
+def main():
+
+    #led = Pin(25, Pin.OUT)
     motor_X: Motor = Motor()
     motor_Y: Motor = Motor()
     motor_Z: Motor = Motor()
-    init_pins(motor_X, motor_Y, motor_Z)
+    #init_pins(motor_X, motor_Y, motor_Z)
 
     basic_artwork: Artwork = read_in_artwork(path="./artworks/training_basic.txt")
     print(basic_artwork.segments)
     # drawer = Drawer(motor_X, motor_Y, motor_Z, basic_artwork)
     # drawer.draw_artwork()
-
-
-    
-    
     # loop(motor_x, motor_y, motor_z, led)
     # draw_square(motor_x, motor_y, motor_z, led)
 
@@ -132,3 +131,7 @@ if __name__ == "__main__":
     # led.value(1) # pen down
     # utime.sleep_ms(250)
     # led.toggle()
+
+
+if __name__ == "__main__":
+    main()
