@@ -1,151 +1,103 @@
-### Imports ###
-import utime
 from machine import Pin
-import math
-from fractions import Fraction
-
-### Constants ###
-STEPS_PER_REV = 400 # 0.9 degress
-PITCH = 1 # 1mm
-LINEAR_STEP = PITCH / STEPS_PER_REV # 0.0025 mm/step
-
-FORWARD = 1
-BACKWARD = 0
-
-STEP_DELAY = 100 # us
-MOTOR_SPEED = 2000 # us
-
-### Pins ###
-MOTOR_X_EN = 13
-MOTOR_X_M0 = 12
-MOTOR_X_M1 = 11
-MOTOR_X_M2 = 10
-MOTOR_X_STEP = 9
-MOTOR_X_DIR = 8
-X_POS = 0
-
-MOTOR_Y_EN = 28
-MOTOR_Y_M0 = 27
-MOTOR_Y_M1 = 26
-MOTOR_Y_M2 = 22
-MOTOR_Y_STEP = 21
-MOTOR_Y_DIR = 20
-Y_POS = 0
-
-MOTOR_Z_EN = 2
-MOTOR_Z_M0 = 3
-MOTOR_Z_M1 = 4
-MOTOR_Z_M2 = 5
-MOTOR_Z_STEP = 6
-MOTOR_Z_DIR = 7
-
-# Initialise Pins #
-X_dir = Pin(MOTOR_X_DIR, Pin.OUT)
-X_step = Pin(MOTOR_X_STEP, Pin.OUT)
-X_en = Pin(MOTOR_X_EN, Pin.OUT)
-
-Y_dir = Pin(MOTOR_Y_DIR, Pin.OUT)
-Y_step = Pin(MOTOR_Y_STEP, Pin.OUT)
-Y_en = Pin(MOTOR_Y_EN, Pin.OUT)
-
-Z_dir = Pin(MOTOR_Z_DIR, Pin.OUT)
-Z_step = Pin(MOTOR_Z_STEP, Pin.OUT)
-Z_en = Pin(MOTOR_Z_EN, Pin.OUT)
-
-def enable_motors():
-    X_en.value(0)
-    Y_en.value(0)
-    Z_en.value(0)
-
-def disable_motors():
-    X_en.value(1)
-    Y_en.value(1)
-    Z_en.value(1)
-
-def step_motor(motor, dir):
-    if motor == "X":
-        X_dir.value(dir)
-        X_step.value(0)
-        X_step.value(1)        
-    elif motor == "Y":
-        Y_dir.value(dir)
-        Y_step.value(0)
-        Y_step.value(1)  
-    elif motor == "Z":
-        Z_dir.value(dir)
-        Z_step.value(0)
-        Z_step.value(1)  
-
-def move_to(x, y):
-    # current position
-    global X_POS, Y_POS
-    # target position
-    steps_x = x/LINEAR_STEP
-    steps_y = y/LINEAR_STEP
-    # delta
-    delta_x = round(steps_x) - X_POS
-    delta_y = round(steps_y) - Y_POS
-
-    X_POS += delta_x
-    Y_POS += delta_y
-    
-    # adjust for negative directions
-    if delta_x < 0:
-        delta_x = -delta_x
-        x_dir = 1
-    else:
-        x_dir = 0
-    if delta_y < 0:
-        delta_y = -delta_y
-        y_dir = 1
-    else: y_dir = 0
-
-    # Find the smoothest path by linking a series of steps together
-    gcd = math.gcd(delta_x, delta_y)
-    base = delta_x/gcd # step in the x direction
-    height = delta_y/gcd # step in the y direction
-    
-    if base >= height:
-        num_stairs = delta_x/base
-        for _ in range(num_stairs):
-            for _ in range(base):
-                step_motor("X", x_dir)
-            for _ in range(height):
-                step_motor("Y", y_dir)
-    elif base < height:
-        num_stairs = delta_x/height
-        for _ in range(num_stairs):
-            for _ in range(base):
-                step_motor("X", x_dir)
-            for _ in range(height):
-                step_motor("Y", y_dir)
-
-def main():
-    
-    # Initialise Pins #
-    X_dir = Pin(MOTOR_X_DIR, Pin.OUT)
-    X_step = Pin(MOTOR_X_STEP, Pin.OUT)
-    X_en = Pin(MOTOR_X_EN, Pin.OUT)
-
-    Y_dir = Pin(MOTOR_Y_DIR, Pin.OUT)
-    Y_step = Pin(MOTOR_Y_STEP, Pin.OUT)
-    Y_en = Pin(MOTOR_Y_EN, Pin.OUT)
-
-    Z_dir = Pin(MOTOR_Z_DIR, Pin.OUT)
-    Z_step = Pin(MOTOR_Z_STEP, Pin.OUT)
-    Z_en = Pin(MOTOR_Z_EN, Pin.OUT)
-    
-    # Enable motors
-    enable_motors()
-
-    
-
-if __name__ == "__main__":
-    main()
+from time import sleep, sleep_ms
+from motor import Motor, init_pins, POS_XY, NEG_XY, STEPS_PER_REV_XY
 
 
+# def loop(motor_x: Motor, motor_y: Motor, motor_z: Motor, led):
+#     while True:
+#         # Move X Up and Back ###
+#         motor_x.step_motor(POS_XY, STEPS_PER_REV_XY)
+#         motor_x.step_motor(NEG_XY, STEPS_PER_REV_XY)
+#         sleep(1)
+#         led.toggle()
+#         sleep_ms(200)
+#         led.toggle()
 
 
+# if __name__ == "__main__":
+#     led = Pin(25, Pin.OUT)
+#     motor_x: Motor = Motor()
+#     motor_y: Motor = Motor()
+#     motor_z: Motor = Motor()
+#     init_pins(motor_x, motor_y, motor_z)
+#     motor_x.enable()
 
+#     loop(motor_x, motor_y, motor_z, led)
 
-    
+    # # Enable motors
+    # enable_motors()
+
+    # # Draw a line
+    # for i in range(1500):
+    #     if i % 500 == 0:
+    #         led.toggle()
+    #     X_step.value(1)
+    #     utime.sleep_ms(20)
+    #     X_step.value(0)
+    #     utime.sleep_ms(STEP_DELAY)
+
+    # move_to(0,0)
+    # led.value(1) # pen down
+    # utime.sleep_ms(250)
+    # led.toggle() # pen up
+
+    # move_to(10, 0)
+    # led.value(1) # pen down
+    # utime.sleep_ms(250)
+    # led.toggle()
+
+    # move_to(10,10)
+    # led.value(1) # pen down
+    # utime.sleep_ms(250)
+    # led.toggle()
+
+    # move_to(0,10)
+    # led.value(1) # pen down
+    # utime.sleep_ms(250)
+    # led.toggle()
+
+    # move_to(0,0)
+    # led.value(1) # pen down
+    # utime.sleep_ms(250)
+    # led.toggle()
+
+from machine import Pin, Timer
+import utime
+ 
+dir_pin = Pin(20, Pin.OUT)
+step_pin = Pin(21, Pin.OUT)
+steps_per_revolution = 400
+ 
+# Initialize timer
+tim = Timer()
+ 
+def step(t):
+    global step_pin
+    step_pin.value(not step_pin.value())
+ 
+def rotate_motor(delay):
+    # Set up timer for stepping
+    tim.init(freq=1000000//delay, mode=Timer.PERIODIC, callback=step)
+ 
+def loop():
+    while True:
+        # Set motor direction clockwise
+        dir_pin.value(0)
+ 
+        # Spin motor slowly
+        rotate_motor(2000)
+        utime.sleep_ms(steps_per_revolution)
+        tim.deinit()  # stop the timer
+        utime.sleep(1)
+ 
+        # Set motor direction counterclockwise
+        dir_pin.value(0)
+ 
+        # Spin motor quickly
+        rotate_motor(1000)
+        utime.sleep_ms(steps_per_revolution)
+        tim.deinit()  # stop the timer
+        utime.sleep(1)
+ 
+if __name__ == '__main__':
+    loop()
