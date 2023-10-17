@@ -36,6 +36,12 @@ XY_CORRECTION = -1
 ### Pulse definition ###
 STEP_PERIOD = 150  # us
 MOTOR_PULSE_PERIOD = 600  # us pps
+START_SPEED = 200 #PPS
+ACCELERATION = 1000 #PPSPS
+FINAL_SPEED = 5000 #PPS
+ACCEL_INC = 20 #PPS
+
+
 
 
 X_POS = 0
@@ -49,6 +55,7 @@ class Motor:
         self._step = None
         self._direction = None
         self._positon = 0
+        self._cur_speed = 0
 
     def enable(self):
         self._enable.value(0)
@@ -60,15 +67,19 @@ class Motor:
         self._enable.value(1)
         self._enable.value(1)
 
-    def step_motor(self, direction: int, steps: int, pulse_period: int):
+    def step_motor(self, direction: int):
         self._direction.value(direction)
 
-        for _ in range(steps):
-            self._step.value(1)
-            sleep_us(STEP_PERIOD)
-            self._step.value(0)
-            sleep_us(pulse_period)
-            #self._positon +=  -(2*direction-1)
+        self._step.value(1)
+        sleep_us(STEP_PERIOD)
+        self._step.value(0)
+
+    def set_current_speed(self, speed: int):
+        self._cur_speed = speed
+
+    def get_current_speed(self) -> None:
+        return self._cur_speed
+    
 
 
 def init_pins(motor_x: Motor, motor_y: Motor, motor_z: Motor):
