@@ -40,6 +40,7 @@ START_SPEED = 200 #PPS
 ACCELERATION = 1000 #PPSPS
 FINAL_SPEED = 5000 #PPS
 ACCEL_INC = 20 #PPS
+ACCEL_UPDATE_RATE = ACCELERATION / ACCEL_INC # Updates per second
 
 
 
@@ -68,6 +69,7 @@ class Motor:
         self._enable.value(1)
 
     def step_motor(self, direction: int):
+
         self._direction.value(direction)
 
         self._step.value(1)
@@ -79,6 +81,18 @@ class Motor:
 
     def get_current_speed(self) -> None:
         return self._cur_speed
+    
+    def accelerate(self, increment):
+        self._cur_speed += increment
+    
+    def decelerate(self, increment):
+        self._cur_speed -= increment
+
+    def update_pos(self, steps):
+        self._position += steps
+    
+    def get_position(self):
+        return self._position
     
 
 
