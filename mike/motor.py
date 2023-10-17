@@ -37,10 +37,8 @@ XY_CORRECTION = -1
 STEP_PERIOD = 150  # us
 MOTOR_PULSE_PERIOD = 600  # us pps
 START_SPEED = 200 #PPS
-ACCELERATION = 1000 #PPSPS
 FINAL_SPEED = 5000 #PPS
 ACCEL_INC = 20 #PPS
-ACCEL_UPDATE_RATE = ACCELERATION / ACCEL_INC # Updates per second
 
 
 
@@ -109,6 +107,22 @@ def init_pins(motor_x: Motor, motor_y: Motor, motor_z: Motor):
     motor_x.disable()
     motor_y.disable()
     motor_z.disable()
+
+def move_canvas(motor_z, dir):
+    
+    for _ in range(200):
+        motor_z.step_motor(dir)
+        sleep_us(2500)
+        
+def step_forward(motor_x, motor_y):
+
+    for _ in range(800):
+        motor_x.step_motor(POS_XY)
+        sleep_us(1500)
+
+    for _ in range(800):
+        motor_y.step_motor(POS_XY)
+        sleep_us(1500)
 
 
 def out_and_back(motor: Motor, led):
