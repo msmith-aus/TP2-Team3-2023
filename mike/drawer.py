@@ -142,15 +142,13 @@ class Drawer:
                 x_time = cur_time
                 self.motor_x.step_motor(x_dir)
                 x_travelled += 1
-                cur_pos[0] += x_dist
-                local_x += 1
+                self.motor_x._positon +=  -(2*x_dir-1)
             if (cur_time - y_time >= (1 / cur_speed_y) and cur_pos[1] < abs(delta_y)):
                 y_time = cur_time
                 self.motor_y.step_motor(y_dir)
                 y_travelled += 1
-                cur_pos[1] += y_dist
-                local_y += 1
-            if local_x >= abs(delta_x) and local_y >= abs(delta_y):
+                self.motor_y._positon +=  -(2*y_dir-1)
+            if self.motor_x._positon >= steps_x and self.motor_y._positon >= steps_y:
                 break
 
 
