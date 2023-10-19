@@ -1,12 +1,8 @@
-#from machine import Pin
+from machine import Pin
 from time import sleep
-from motor import Motor, POS_XY, NEG_XY, STEPS_PER_REV_XY, NEG_Z, POS_Z, STEPS_PER_REV_Z
+from motor import Motor, POS_XY, NEG_XY, STEPS_PER_REV_XY, NEG_Z, POS_Z, STEPS_PER_REV_Z, init_pins
 from util import Artwork
-from drawer import Drawer
-
-sleep_ms = lambda x: sleep(x*10E-06)
-
-
+from drawer import Drawer, generate_acceleration_profile
 
 
 
@@ -73,23 +69,38 @@ def read_in_artwork(path):
                 x, y = map(
                     float, line.split(",")
                 )  # Split by comma and convert to float
-                artwork.segments.append((x, y))
+                segment.append((x, y))
                 print(x, y)
-                continue
     return artwork
 
+
+def accel_test(drawer: Drawer):
+
+    origin = (0,0)
+    point = (0,10)
+    print("Move_to_point")
+    drawer.move_to_point(point)
+    print("Move_to_origin")
+    drawer.move_to_point(origin)
 
 
 def main():
 
     #led = Pin(25, Pin.OUT)
-    motor_X: Motor = Motor()
-    motor_Y: Motor = Motor()
-    motor_Z: Motor = Motor()
-    #init_pins(motor_X, motor_Y, motor_Z)
+    motor_x: Motor = Motor()
+    motor_y: Motor = Motor()
+    motor_z: Motor = Motor()
+    init_pins(motor_x, motor_y, motor_z)
+    artwork = read_in_artwork('artworks/training_basic.txt')
+    drawer = Drawer(motor_x, motor_y, motor_z, artwork)
+    #accel_test(drawer)
+    drawer.draw_artwork()
+    
+    
 
-    basic_artwork: Artwork = read_in_artwork(path="./artworks/training_basic.txt")
-    print(basic_artwork.segments)
+
+    #basic_artwork: Artwork = read_in_artwork(path="./artworks/training_basic.txt")
+    #print(basic_artwork.segments)
     # drawer = Drawer(motor_X, motor_Y, motor_Z, basic_artwork)
     # drawer.draw_artwork()
     # loop(motor_x, motor_y, motor_z, led)

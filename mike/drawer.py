@@ -1,7 +1,6 @@
 from util import Artwork
 from motor import *
-from time import sleep_ms
-from time import time
+from utime import sleep_ms, ticks_us, ticks_diff
 from math import sqrt
 
 class Drawer:
@@ -16,16 +15,13 @@ class Drawer:
     def draw_artwork(self):
         print("Drawing :)")
         for segment in self.artwork.segments:
-            x_travelled = 0
-            y_travelled = 0
-            segment_distance = self.segment_distance(segment)
-            accel_profile = self.generate_acceleration_profile(segment_distance[0], segment_distance[1])
             move_canvas(self.motor_z, NEG_Z)
             sleep_ms(500)
             for point in segment:
-                self.move_to_point(point, x_travelled, y_travelled, accel_profile)
+                self.move_to_point(point)
             move_canvas(self.motor_z, POS_Z)
-            self.move_to_point(0,0)
+            self.move_to_point((0,0))
+            
 
     def segment_distance(self, segment):
         # Segment distance in number of steps
@@ -33,21 +29,19 @@ class Drawer:
         y_total = 0
         start = segment[0]
         for point in segment:
-            if start == segment[0]:
-                continue
-            x_dist = (point[0] - start[0]) // LINEAR_STEP_XY
-            y_dist = (point[1] - start[1]) // LINEAR_STEP_XY
+            x_dist = abs((point[0] - start[0])) // LINEAR_STEP_XY
+            y_dist = abs((point[1] - start[1])) // LINEAR_STEP_XY
             x_total += x_dist
             y_total += y_dist
             start = point
         return (x_total, y_total)
                
-    def move_to_point(self, point, x_travelled, y_travelled, acceleration_profile):
+    def move_to_point(self, point):
     
         # current position in steps
         x_pos = self.motor_x.get_position()
         y_pos = self.motor_y.get_position()
-
+        
         # target position
         steps_x = point[0] / LINEAR_STEP_XY
         steps_y = point[1] / LINEAR_STEP_XY
@@ -55,6 +49,7 @@ class Drawer:
         # delta
         delta_x = round(steps_x) - x_pos
         delta_y = round(steps_y) - y_pos
+        
 
         #adjust for negative directions
         if delta_x < 0:
@@ -67,6 +62,9 @@ class Drawer:
             y_dir = NEG_XY
         else:
             y_dir = POS_XY
+            
+        #acceleration profile
+        accel_profile = generate_acceleration_profile(delta_x, delta_y)
 
         # get required motor speeds for each direction
         if delta_x == 0 or delta_y == 0:
@@ -113,52 +111,63 @@ class Drawer:
                 y_start = self.motor_y.get_current_speed()
             x_final = y_final = FINAL_SPEED
         
-        x_time = y_time = accel_timer = time()
+        x_time = y_time = accel_timer = ticks_us()
         self.motor_x.set_current_speed(x_start)
         self.motor_y.set_current_speed(y_start)
         self.motor_x.enable()
         self.motor_y.enable()
-        acceleration = (FINAL_SPEED**2 - START_SPEED**2) / 2*acceleration_profile[2]
-        accel_update_rate = acceleration / ACCEL_INC
+        #acceleration = (FINAL_SPEED**2 - START_SPEED**2) / 2*acceleration_profile[2]
+        accel_update_rate = (ACCELERATION / ACCEL_INC) # Update rate
+        local_x = 0
+        local_y = 0
+        
         while (True):
-            cur_time = time()
+            cur_time = ticks_us()
             cur_speed_x = self.motor_x.get_current_speed()
             cur_speed_y = self.motor_y.get_current_speed()
-            magnitude_travelled = sqrt(x_travelled**2 + y_travelled**2)
-            if cur_speed_x < x_final and cur_speed_y < y_final and \
-                (cur_time - accel_timer) >= (1 / accel_update_rate):
+            magnitude_travelled = sqrt(local_x**2 + local_y**2)
+            #print(cur_speed_y)
+            if delta_x != 0 and cur_speed_x < x_final and \
+               (ticks_diff(cur_time, accel_timer)) >= ((1 / accel_update_rate)*1e06) and \
+               magnitude_travelled <= accel_profile[0]:
                 accel_timer = cur_time
                 # Increment current speed
                 self.motor_x.accelerate(ACCEL_INC)
+                
+            if delta_y != 0 and cur_speed_y < y_final and \
+                (ticks_diff(cur_time, accel_timer)) >= ((1 / accel_update_rate)*1e06) and \
+                magnitude_travelled <= accel_profile[0]:
+                accel_timer = cur_time
+                # Increment current speed
                 self.motor_y.accelerate(ACCEL_INC)
-            if cur_speed_x > 0 and \
-                cur_speed_y > 0 and (cur_time - accel_timer) >= (1 / accel_update_rate) and \
-                magnitude_travelled >= acceleration_profile[1]:
+            if cur_speed_x > START_SPEED and cur_speed_y > START_SPEED and \
+                (ticks_diff(cur_time, accel_timer)) >= ((1 / accel_update_rate)*1e06) and \
+                    magnitude_travelled >= acceleration_profile[1]:
                 accel_timer = cur_time
                 # Decrement current speed
                 self.motor_x.decelerate(ACCEL_INC)
                 self.motor_y.decelerate(ACCEL_INC)
-            if (cur_time - x_time) >= (1 / cur_speed_x) and cur_pos[0] < abs(delta_x):
+            if ticks_diff(cur_time, x_time) >= ((1 / cur_speed_x)*1e06) and local_x < delta_x:
                 x_time = cur_time
                 self.motor_x.step_motor(x_dir)
-                x_travelled += 1
-                self.motor_x._positon +=  -(2*x_dir-1)
-            if (cur_time - y_time >= (1 / cur_speed_y) and cur_pos[1] < abs(delta_y)):
+                local_x += 1
+                self.motor_x.update_pos(-(2*x_dir-1))
+            if ticks_diff(cur_time, y_time) >= ((1 / cur_speed_y)*1e06) and local_y < delta_y:
                 y_time = cur_time
                 self.motor_y.step_motor(y_dir)
-                y_travelled += 1
-                self.motor_y._positon +=  -(2*y_dir-1)
-            if self.motor_x._positon >= steps_x and self.motor_y._positon >= steps_y:
+                local_y += 1
+                self.motor_y.update_pos(-(2*y_dir-1))
+            if local_x >= delta_x and local_y >= delta_y:
                 break
 
 
-    def generate_acceleration_profile(total_x_distance, total_y_distance):
-        # Returns a tuple (a, b, c)
-        # Where a is the number of steps for motors to stop accelerating
-        # b is the number of steps for x to start decelerating
-        # c it the total distance travelled over the segment
+def generate_acceleration_profile(total_x_distance, total_y_distance):
+    # Returns a tuple (a, b, c)
+    # Where a is the number of steps for motors to stop accelerating
+    # b is the number of steps for x to start decelerating
+    # c it the total distance travelled over the segment
+
     
-        
-        # Try one quarter ratio e.g total steps is 100, finish accelerate by 25 steps and start decelerate at 75 steps
-        magnitude = sqrt(total_x_distance**2 + total_y_distance**2)
-        return (round(magnitude * 1/4), round(magnitude * 3/4), magnitude)
+    # Try one quarter ratio e.g total steps is 100, finish accelerate by 25 steps and start decelerate at 75 steps
+    magnitude = sqrt(total_x_distance**2 + total_y_distance**2)
+    return (round(magnitude * 1/4), round(magnitude * 3/4), magnitude)

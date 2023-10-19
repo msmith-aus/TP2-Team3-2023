@@ -1,6 +1,7 @@
 from machine import Pin
 from utime import sleep_us
 
+
 ### PIN MAPPINGS ###
 
 ### X ###
@@ -34,11 +35,13 @@ NEG_Z = 0
 XY_CORRECTION = -1
 
 ### Pulse definition ###
-STEP_PERIOD = 150  # us
+STEP_PERIOD = 150 # us
 MOTOR_PULSE_PERIOD = 600  # us pps
-START_SPEED = 200 #PPS
-FINAL_SPEED = 5000 #PPS
-ACCEL_INC = 20 #PPS
+START_SPEED = 100 #PPS
+FINAL_SPEED = 1200 #PPS
+ACCEL_INC = 10 #PPS
+ACCELERATION = 500 #PPSPS
+ACCEL_UPDATE_RATE = ACCELERATION / ACCEL_INC
 
 
 
@@ -53,8 +56,8 @@ class Motor:
         self._enable = None
         self._step = None
         self._direction = None
-        self._positon = 0
-        self._cur_speed = 0
+        self._position = 0 # Position in Steps
+        self._cur_speed = 0 # PPS
 
     def enable(self):
         self._enable.value(0)
@@ -110,9 +113,12 @@ def init_pins(motor_x: Motor, motor_y: Motor, motor_z: Motor):
 
 def move_canvas(motor_z, dir):
     
+    motor_z.enable()
+    print("Moving z stage")
     for _ in range(200):
         motor_z.step_motor(dir)
         sleep_us(2500)
+    motor_z.disable()
         
 def step_forward(motor_x, motor_y):
 
@@ -140,4 +146,10 @@ def out_and_back(motor: Motor, led):
         led.toggle()
         sleep_ms(200)
         led.toggle()
+
+
+
+
+
+
 
