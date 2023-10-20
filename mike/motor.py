@@ -35,12 +35,12 @@ NEG_Z = 0
 XY_CORRECTION = -1
 
 ### Pulse definition ###
-STEP_PERIOD = 150 # us
+STEP_PERIOD = 50 # us
 MOTOR_PULSE_PERIOD = 600  # us pps
-START_SPEED = 100 #PPS
-FINAL_SPEED = 1200 #PPS
-ACCEL_INC = 10 #PPS
-ACCELERATION = 500 #PPSPS
+START_SPEED = 800 #PPS
+FINAL_SPEED = 1800 #PPS
+ACCEL_INC = 40 #PPS
+ACCELERATION = 1000 #PPSPS
 ACCEL_UPDATE_RATE = ACCELERATION / ACCEL_INC
 
 
@@ -86,7 +86,7 @@ class Motor:
     def accelerate(self, increment):
         self._cur_speed += increment
     
-    def decelerate(self, increment):
+    def deccelerate(self, increment):
         self._cur_speed -= increment
 
     def update_pos(self, steps):
@@ -122,6 +122,8 @@ def move_canvas(motor_z, dir):
         
 def step_forward(motor_x, motor_y):
 
+    motor_x.enable()
+    motor_y.enable()
     for _ in range(800):
         motor_x.step_motor(POS_XY)
         sleep_us(1500)
@@ -129,6 +131,15 @@ def step_forward(motor_x, motor_y):
     for _ in range(800):
         motor_y.step_motor(POS_XY)
         sleep_us(1500)
+        
+    motor_x.disable()
+    motor_y.disable()
+        
+def to_start(motor_x, motor_y, motor_z):
+    move_canvas(motor_z, NEG_Z)
+    sleep_us(5000)
+    step_forward(motor_x, motor_y)
+    sleep_us(5000)
 
 
 def out_and_back(motor: Motor, led):

@@ -1,6 +1,6 @@
 from machine import Pin
-from time import sleep
-from motor import Motor, POS_XY, NEG_XY, STEPS_PER_REV_XY, NEG_Z, POS_Z, STEPS_PER_REV_Z, init_pins
+from utime import sleep_ms
+from motor import Motor, POS_XY, NEG_XY, STEPS_PER_REV_XY, NEG_Z, POS_Z, STEPS_PER_REV_Z, init_pins, move_canvas, to_start
 from util import Artwork
 from drawer import Drawer, generate_acceleration_profile
 
@@ -62,7 +62,6 @@ def read_in_artwork(path):
             elif line == "STOP":
                 print("stop")
                 artwork.segments.append(segment)
-                segment = []
                 continue
             else:
                 print(line)
@@ -82,7 +81,26 @@ def accel_test(drawer: Drawer):
     drawer.move_to_point(point)
     print("Move_to_origin")
     drawer.move_to_point(origin)
-
+    
+    
+def diag_test(drawer: Drawer, motor_x, motor_y, motor_z):
+    
+    to_start(motor_x, motor_y, motor_z)
+    move_canvas(motor_z, POS_Z)
+    origin = (0,0)
+    point = (1,5)
+    print("Move to point", point)
+    drawer.move_to_point(point)
+    print("Move to point", origin)
+    drawer.move_to_point(origin)
+    
+def canvas_test(motor_z):
+    
+    for i in range(10):
+        move_canvas(motor_z, NEG_Z)
+        sleep_ms(1000)
+        move_canvas(motor_z, POS_Z)
+        sleep_ms(1000)
 
 def main():
 
@@ -91,10 +109,12 @@ def main():
     motor_y: Motor = Motor()
     motor_z: Motor = Motor()
     init_pins(motor_x, motor_y, motor_z)
-    artwork = read_in_artwork('artworks/training_basic.txt')
+    artwork = read_in_artwork('artworks/training_apprentice.txt')
     drawer = Drawer(motor_x, motor_y, motor_z, artwork)
     #accel_test(drawer)
+    #canvas_test(motor_z)
     drawer.draw_artwork()
+    #diag_test(drawer, motor_x, motor_y, motor_z)
     
     
 
