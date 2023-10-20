@@ -49,7 +49,6 @@ def read_in_artwork(path):
     with open(path, "r") as file:
         print("Reading in file")
         content = file.readlines()
-        segment = []
         for line in content:
             line = line.strip()
             if line == '':
@@ -109,9 +108,13 @@ def main():
     motor_y: Motor = Motor()
     motor_z: Motor = Motor()
     init_pins(motor_x, motor_y, motor_z)
-    artwork = read_in_artwork('artworks/training_apprentice.txt')
+    artwork = read_in_artwork('artworks/training_beginner.txt')
     drawer = Drawer(motor_x, motor_y, motor_z, artwork)
+    motor_x.enable()
+    motor_y.enable()
     #accel_test(drawer)
+    motor_x.disable()
+    motor_y.disable()
     #canvas_test(motor_z)
     drawer.draw_artwork()
     #diag_test(drawer, motor_x, motor_y, motor_z)

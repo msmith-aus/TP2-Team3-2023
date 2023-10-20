@@ -1,6 +1,6 @@
-from util import Artwork
+from util import Artwork, greatest_common_divisor
 from motor import *
-from utime import sleep_ms, ticks_us, ticks_diff
+from utime import sleep_us, ticks_us, ticks_diff
 from math import sqrt
 
 class Drawer:
@@ -14,7 +14,10 @@ class Drawer:
     
     def draw_artwork(self):
         print("Drawing :)")
+        
         to_start(self.motor_x, self.motor_y, self.motor_z)
+        self.motor_x.enable()
+        self.motor_y.enable()
         for segment in self.artwork.segments:
             self.move_to_point(segment[0])
             move_canvas(self.motor_z, POS_Z)
@@ -22,6 +25,9 @@ class Drawer:
                 self.move_to_point(point)
             move_canvas(self.motor_z, NEG_Z)
         self.move_to_point((0,0))
+        self.motor_x.disable()
+        self.motor_x.disable()
+
             
             
 
@@ -43,16 +49,22 @@ class Drawer:
     def move_to_point(self, point):
     
         # current position in steps
-        x_pos = self.motor_x.get_position()
-        y_pos = self.motor_y.get_position()
+        x_pos = self.motor_x.get_position() * MICRO_STEP
+        y_pos = self.motor_y.get_position() * MICRO_STEP
         
         # target position
-        steps_x = point[0] / LINEAR_STEP_XY
-        steps_y = point[1] / LINEAR_STEP_XY
+        steps_x = (point[0] // LINEAR_STEP_XY) * MICRO_STEP
+        steps_y = (point[1] // LINEAR_STEP_XY) * MICRO_STEP
+        
+        print("X_pos:", x_pos)
+        print("Y_pos:", y_pos)
 
         # delta
-        delta_x = round(steps_x) - x_pos
-        delta_y = round(steps_y) - y_pos
+        delta_x = steps_x - x_pos
+        delta_y = steps_y - y_pos
+        
+        print("delta_x:", delta_x)
+        print("delta_y:", delta_y)
         
         print("Moving to point:", point)
 
@@ -67,24 +79,39 @@ class Drawer:
             y_dir = NEG_XY
         else:
             y_dir = POS_XY
+        
             
         #acceleration profile
         accel_profile = generate_acceleration_profile(delta_x, delta_y)
 
-        # get required motor speeds for each direction
-        if delta_x == 0 or delta_y == 0:
+         # Find the smoothest path by linking a series of steps together
+        hgd = greatest_common_divisor(delta_x, delta_y)
+        if hgd == 0:
+            hgd = 1
+        base = delta_x / hgd  # step in the x direction
+        height = delta_y / hgd  # step in the y direction
+
+        if base >= height:
+            if base != 0:
+                num_stairs = delta_x // base
+            else:
+                num_stairs = 1
+        elif base < height:
+            if height != 0:
+                num_stairs = delta_y // height
+            else:
+                num_stairs = 1
+                
+        if base == 0 or height == 0:
             ratio = 1
         else:
-            ratio = delta_x / delta_y
-        # Check current motor speeds
-        # Set the lower speed motor to match the higher speed motor
-        # Then re-calculate the new speeds with the ratio
-        #print("Motor speed X:", self.motor_x.get_current_speed())
-        #print("Motor speed Y:", self.motor_y.get_current_speed())
-        if self.motor_x.get_current_speed() > self.motor_y.get_current_speed():
+            ratio = base / height
+                
+        if self.motor_x.get_current_speed() < self.motor_y.get_current_speed():
             self.motor_y.set_current_speed(self.motor_x.get_current_speed())
         else:
-            self.motor_x.set_current_speed(self.motor_y.get_current_speed())
+            self.motor_x.set_current_speed(self.motor_y.get_current_speed())        
+    
         if ratio > 1:
             if self.motor_x.get_current_speed() == 0:
                 x_start = START_SPEED
@@ -96,7 +123,7 @@ class Drawer:
             else:
                 y_start = self.motor_y.get_current_speed() / ratio
             y_final = FINAL_SPEED / ratio
-    
+            
         elif ratio < 1:
             if self.motor_x.get_current_speed() == 0:
                 x_start = START_SPEED * ratio
@@ -108,7 +135,7 @@ class Drawer:
             else:
                 y_start = self.motor_y.get_current_speed()
             y_final = FINAL_SPEED
-
+            
         else:
             if self.motor_x.get_current_speed() == 0:
                 x_start = START_SPEED
@@ -120,81 +147,68 @@ class Drawer:
                 y_start = self.motor_y.get_current_speed()
             x_final = y_final = FINAL_SPEED
         
-        x_time = y_time = accel_timer = ticks_us()
         self.motor_x.set_current_speed(x_start)
         self.motor_y.set_current_speed(y_start)
-        self.motor_x.enable()
-        self.motor_y.enable()
-        #acceleration = (FINAL_SPEED**2 - START_SPEED**2) / 2*acceleration_profile[2]
+            
         local_x = 0
         local_y = 0
         
-        while (True):
+        i = 0 # Stairs counter
+        j = 0 # Base counter
+        k = 0 # Height counter
+        x_time = y_time = accel_timer = ticks_us()
+        while (i < num_stairs):
             cur_time = ticks_us()
             cur_speed_x = self.motor_x.get_current_speed()
             cur_speed_y = self.motor_y.get_current_speed()
             magnitude_travelled = sqrt(local_x**2 + local_y**2)
-            #print("Motor speed X:", self.motor_x.get_current_speed())
-            #print("Motor speed Y:", self.motor_y.get_current_speed())
-            if magnitude_travelled <= accel_profile[0] and \
-               (ticks_diff(cur_time, accel_timer)) >= ((1 / ACCEL_UPDATE_RATE)*1e06):
+            if ticks_diff(cur_time, x_time) >= ((1 / cur_speed_x)*1e06) and j < base:
+                j += 1
+                #print("in x")
+                x_time = cur_time
+                local_x += 1
+                self.motor_x.step_motor(x_dir)
+                self.motor_x.update_pos(-(2*x_dir-1) / MICRO_STEP)
+                
+            if ticks_diff(cur_time, y_time) >= ((1 / cur_speed_y)*1e06) and k < height:
+                #print("in y")
+                k += 1
+                local_y += 1
+                y_time = cur_time
+                self.motor_y.step_motor(y_dir)
+                self.motor_y.update_pos(-(2*y_dir-1) / MICRO_STEP)
+                
+            if ticks_diff(cur_time, accel_timer) >= ((1 / ACCEL_UPDATE_RATE)*1e06) and \
+               magnitude_travelled <= accel_profile[0]:
                 if ratio > 1:
-                    if delta_x > 0 and cur_speed_x < x_final:
+                    if base > 0 and cur_speed_x < x_final:
                         self.motor_x.accelerate(ACCEL_INC)
-                    if delta_y > 0 and cur_speed_y < y_final:
+                    if height > 0 and cur_speed_y < y_final:
                         self.motor_y.accelerate(ACCEL_INC / ratio)
                 elif ratio < 1:
-                    if delta_x > 0 and cur_speed_x < x_final:
+                    if base > 0 and cur_speed_x < x_final:
                         self.motor_x.accelerate(ACCEL_INC * ratio)
-                    if delta_y > 0 and cur_speed_y < y_final:
+                    if height > 0 and cur_speed_y < y_final:
                         self.motor_y.accelerate(ACCEL_INC)
                 else:
-                    if delta_x > 0 and cur_speed_x < x_final:
+                    if base > 0 and cur_speed_x < x_final:
                         self.motor_x.accelerate(ACCEL_INC)
-                    if delta_y > 0 and cur_speed_y < y_final:
+                    if height > 0 and cur_speed_y < y_final:
                         self.motor_y.accelerate(ACCEL_INC)
                     
                 accel_timer = cur_time
-          
                 
-            if magnitude_travelled >= accel_profile[1] and \
-               ticks_diff(cur_time, accel_timer) >= ((1 / ACCEL_UPDATE_RATE)*1e06):
                 
-                if ratio > 1:
-                    if delta_x > 0 and cur_speed_x > x_start:
-                        self.motor_x.deccelerate(ACCEL_INC)
-                    if delta_y > 0 and cur_speed_y > y_start:
-                        self.motor_y.deccelerate(ACCEL_INC / ratio)
-                elif ratio < 1:
-                    if delta_x > 0 and cur_speed_x > x_start:
-                        self.motor_x.deccelerate(ACCEL_INC * ratio)
-                    if delta_y > 0 and cur_speed_y > y_start:
-                        self.motor_y.deccelerate(ACCEL_INC)
-                else:
-                    if delta_x > 0 and cur_speed_x > x_start:
-                        self.motor_x.deccelerate(ACCEL_INC)
-                    if delta_y > 0 and cur_speed_y > y_start:
-                        self.motor_y.deccelerate(ACCEL_INC)
-        
-                accel_timer = cur_time
-                
+            if j == base and k == height:
+                j = 0
+                k = 0
+                i += 1
+            #print("Num_stairs:", i)
+            #print("Base:", j)
+            #print("Height:", k)
+            
 
-            if ticks_diff(cur_time, x_time) >= ((1 / cur_speed_x)*1e06) and local_x < delta_x:
-                x_time = cur_time
-                self.motor_x.step_motor(x_dir)
-                local_x += 1
-                self.motor_x.update_pos(-(2*x_dir-1))
-                
-            if ticks_diff(cur_time, y_time) >= ((1 / cur_speed_y)*1e06) and local_y < delta_y:
-                y_time = cur_time
-                self.motor_y.step_motor(y_dir)
-                local_y += 1
-                self.motor_y.update_pos(-(2*y_dir-1))
-                
-            if local_x >= delta_x and local_y >= delta_y:
-                break
-        
-
+            
 
 def generate_acceleration_profile(total_x_distance, total_y_distance):
     # Returns a tuple (a, b, c)
