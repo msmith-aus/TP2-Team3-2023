@@ -1,80 +1,10 @@
-from machine import Pin
+from machine import Pin, freq
 from time import sleep, sleep_ms
-from motor import Motor, init_pins, POS_XY, NEG_XY, STEPS_PER_REV_XY, NEG_Z, POS_Z, STEPS_PER_REV_Z
+from motor import *
 from util import Artwork
 from drawer import Drawer
+import stepper_controller as ctrl
 
-
-
-
-
-def draw_square(motor_x: Motor, motor_y: Motor, motor_z: Motor, led):
-    x_steps = 0
-    y_steps = 0
-
-    # Move up away from ink drip
-
-    motor_z.enable()
-    motor_z.step_motor(POS_Z, 600) # pen up
-    sleep_ms(500)
-
-    # Move to start of drawing
-    motor_x.enable()
-    motor_x.step_motor(POS_XY, 1200)
-    sleep_ms(500)
-    motor_y.enable()
-    motor_y.step_motor(POS_XY, 1200)
-    sleep_ms(500)
-    motor_z.step_motor(NEG_Z, 600) # pen down
-    sleep_ms(500)
-    # draw square
-    motor_x.step_motor(POS_XY, 8000)
-    motor_y.step_motor(POS_XY, 8000)
-    motor_x.step_motor(NEG_XY, 8000)
-    motor_y.step_motor(NEG_XY, 8000)
-
-    # sleep_ms(500)
-    motor_z.step_motor(NEG_Z, 600) # pen up
-    sleep_ms(500)
-    motor_x.step_motor(NEG_XY, 1200)
-    sleep_ms(500)
-    motor_y.step_motor(NEG_XY,1200)
-    motor_z.step_motor(NEG_Z, 600) # pen down
-    sleep_ms(500)
-
-    motor_x.disable()
-    motor_y.disable()
-    motor_z.disable()
-
-def read_in_artwork(path):
-    artwork = Artwork()
-    with open(path, "r") as file:
-        print("Reading in file")
-        content = file.readlines()
-        segment = []
-        for line in content:
-            line = line.strip()
-            if line == '':
-                print("\n")
-                continue
-            if line == "START":
-                print("start")
-                segment = []
-                continue
-            elif line == "STOP":
-                print("stop")
-                artwork.segments.append(segment)
-                segment = []
-                continue
-            else:
-                print(line)
-                x, y = map(
-                    float, line.split(",")
-                )  # Split by comma and convert to float
-                artwork.segments.append((x, y))
-                print(x, y)
-                continue
-    return artwork
 
 
 
@@ -84,11 +14,73 @@ if __name__ == "__main__":
     motor_Y: Motor = Motor()
     motor_Z: Motor = Motor()
     init_pins(motor_X, motor_Y, motor_Z)
+    motor_X.enable()
 
-    basic_artwork: Artwork = read_in_artwork(path="./artworks/training_basic.txt")
-    print(basic_artwork.segments)
-    # drawer = Drawer(motor_X, motor_Y, motor_Z, basic_artwork)
+    sm = rp2.StateMachine(0, blink, freq=100000, set_base=Pin(21))
+    sm.active(1)
+    sleep(3)
+    sm.active(0)
+
+
+    motor_X.disable()
+
+    # artwork: Artwork = read_in_artwork(path="./artworks/square.txt")
+    # # print(basic_artwork.segments)
+    # drawer = Drawer(motor_X, motor_Y, motor_Z, artwork)
+    # print(drawer.artwork.segments)
+
+    # # Move from home 
+
+    # # Move up away from ink drip
+    # print("Should be at (-1.5, -1.5)mm - (0,0) steps.")
+    # print(f"At: ({motor_X._positon},{motor_Y._positon}) steps")
+
+    # motor_Z.enable()
+    # print(f"Moving to (0,0)")
+    # motor_Z.step_motor(POS_Z, 1200) # pen up 
+    # print("PEN UP")
+    # print(f"At: ({motor_X._positon},{motor_Y._positon}) steps")
+    # sleep_ms(500)
+
+    # print("Move to start of drawing")
+    # motor_X.enable()
+    # print(f"Moving to (1200,0)")
+    # motor_X.step_motor(POS_XY, 1200)
+    # print(f"At: ({motor_X._positon},{motor_Y._positon}) steps")
+    # sleep_ms(500)
+    # motor_Y.enable()
+    # motor_Y.step_motor(POS_XY, 1200)
+    # print(f"At: ({motor_X._positon},{motor_Y._positon}) steps")
+    # sleep_ms(500)
+    # # motor_Z.step_motor(NEG_Z, 1200) # pen down
+    # # sleep_ms(500)
+
     # drawer.draw_artwork()
+
+    # # Move back to home
+    # print(f"Moving to (1200,1200)")
+    # drawer.move_to(0,0)
+    # print(f"At: ({motor_X._positon},{motor_Y._positon}) steps") # home
+
+    # print(f"Moving to (0,1200)")
+    # motor_X.step_motor(NEG_XY, 1200)
+    # print(f"At: ({motor_X._positon},{motor_Y._positon}) steps")
+    # sleep_ms(500)
+
+    # print(f"Moving to (0,0)")
+    # motor_Y.step_motor(NEG_XY,1200)
+    # print(f"At: ({motor_X._positon},{motor_Y._positon}) steps")
+    # sleep_ms(500)
+
+    # motor_Z.step_motor(NEG_Z, 1200) # pen down
+    # print("PEN DOWN")
+    
+    # motor_X.disable()
+    # motor_Y.disable()
+    # motor_Z.disable()
+
+
+
 
 
     

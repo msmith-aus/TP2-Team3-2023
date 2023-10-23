@@ -11,6 +11,9 @@ class Artwork:
     def __init__(self):
         self.segments = []
 
+    def add_segment(self, segment):
+        self.segments.append(segment)
+
         
 
 
@@ -95,35 +98,97 @@ class Artwork:
 #             plt.savefig(fname=artwork.split('.')[0])
 #         plt.show()
 
-# def parse_artwork_file(filename):
-#     data = str(filename).split("/")
-#     name = data[1]
-#     with open(filename, "r") as file:
-#         artwork = Artwork()
-#         artwork.add_name(name)
-#         content = file.readlines()
-#         for line in content:
-#             line = line.strip()
-#             if line == "START":
-#                 segment = []
-#             elif line == "STOP":
-#                 artwork.add_segment(segment)
-#                 segment = None
-#             elif segment is not None:
-#                 x, y = map(
-#                     float, line.split(",")
-#                 )  # Split by comma and convert to float
-#                 artwork.add_point((x, y))
-#                 segment.append((x, y))
-#             else:
-#                 # empty line
-#                 continue
-#         return artwork
+def parse_artwork_file(filename):
+    data = str(filename).split("/")
+    name = data[1]
+    with open(filename, "r") as file:
+        artwork = Artwork()
+        artwork.add_name(name)
+        content = file.readlines()
+        for line in content:
+            line = line.strip()
+            if line == "START":
+                segment = []
+            elif line == "STOP":
+                artwork.add_segment(segment)
+                segment = None
+            elif segment is not None:
+                x, y = map(
+                    float, line.split(",")
+                )  # Split by comma and convert to float
+                artwork.add_point((x, y))
+                segment.append((x, y))
+            else:
+                # empty line
+                continue
+        return artwork
     
 def greatest_common_divisor(a, b):
     while b:
         a, b = b, a % b
     return a
+
+def draw_square(motor_x: Motor, motor_y: Motor, motor_z: Motor, led):
+    x_steps = 0
+    y_steps = 0
+
+    # Move up away from ink drip
+
+    motor_z.enable()
+    motor_z.step_motor(POS_Z, 600) # pen up
+    sleep_ms(500)
+
+    # Move to start of drawing
+    motor_x.enable()
+    motor_x.step_motor(POS_XY, 1200)
+    sleep_ms(500)
+    motor_y.enable()
+    motor_y.step_motor(POS_XY, 1200)
+    sleep_ms(500)
+    motor_z.step_motor(NEG_Z, 600) # pen down
+    sleep_ms(500)
+    # draw square
+    motor_x.step_motor(POS_XY, 8000)
+    motor_y.step_motor(POS_XY, 8000)
+    motor_x.step_motor(NEG_XY, 8000)
+    motor_y.step_motor(NEG_XY, 8000)
+
+    # sleep_ms(500)
+    motor_z.step_motor(NEG_Z, 600) # pen up
+    sleep_ms(500)
+    motor_x.step_motor(NEG_XY, 1200)
+    sleep_ms(500)
+    motor_y.step_motor(NEG_XY,1200)
+    motor_z.step_motor(NEG_Z, 600) # pen down
+    sleep_ms(500)
+
+    motor_x.disable()
+    motor_y.disable()
+    motor_z.disable()
+
+    
+def read_in_artwork(path):
+    artwork = Artwork()
+    with open(path, "r") as file:
+        artwork = Artwork()
+        content = file.readlines()
+        for line in content:
+            line = line.strip()
+            if line == "START":
+                segment = []
+            elif line == "STOP":
+                artwork.add_segment(segment)
+                segment = None
+            elif segment is not None:
+                x, y = map(
+                    float, line.split(",")
+                )  # Split by comma and convert to float
+                segment.append((x, y))
+            else:
+                # empty line
+                continue
+        return artwork
+
 
 
 
