@@ -40,23 +40,10 @@ NEG_Z = 0
 
 XY_CORRECTION = -1
 
-### Pulse definition ###
-STEP_PERIOD = 5 # us
-MOTOR_PULSE_PERIOD = 600  # us pps
-START_SPEED = 1500 #PPS
-FINAL_SPEED = 10000 #PPS
-ACCEL_INC = 10 #PPS
-ACCELERATION = 2000 #PPSPS
-ACCEL_UPDATE_RATE = ACCELERATION / ACCEL_INC
+### Pulse definition ###``
+STEP_PERIOD = 10 # us
+FINAL_SPEED = 3000  #PPS
 MICRO_STEP = 2 # HALF
-
-
-
-
-X_POS = 0
-Y_POS = 0
-Z_POS = 0
-
 
 class Motor:
     def __init__(self):
@@ -136,9 +123,9 @@ def move_canvas(motor_z, dir):
     
     motor_z.enable()
     print("Moving z stage")
-    for _ in range(200):
+    for _ in range(100):
         motor_z.step_motor(dir)
-        sleep_us(2500)
+        sleep_us(2000)
     motor_z.disable()
         
 def step_forward(motor_x, motor_y):
@@ -147,37 +134,22 @@ def step_forward(motor_x, motor_y):
     motor_y.enable()
     for _ in range(800 * MICRO_STEP):
         motor_x.step_motor(POS_XY)
-        sleep_us(500)
+        sleep_us(250)
 
     for _ in range(800 * MICRO_STEP):
         motor_y.step_motor(POS_XY)
-        sleep_us(500)
+        sleep_us(250)
         
     motor_x.disable()
     motor_y.disable()
         
 def to_start(motor_x, motor_y, motor_z):
     move_canvas(motor_z, NEG_Z)
-    sleep_us(5000)
+    sleep_us(2000)
     step_forward(motor_x, motor_y)
-    sleep_us(5000)
+    sleep_us(2000)
 
 
-def out_and_back(motor: Motor, led):
-    while True:
-        # Move X Up and Back ###
-        motor.enable()
-        motor.step_motor(POS_XY, STEPS_PER_REV_Z)
-        motor.step_motor(NEG_XY, STEPS_PER_REV_Z)
-        print("Motor EN: ", motor._enable.value())
-        motor.disable()
-        motor.step_motor(POS_XY, STEPS_PER_REV_Z)
-        motor.step_motor(NEG_XY, STEPS_PER_REV_Z)
-        print("Motor EN: ", motor._enable.value())
-        sleep(1)
-        led.toggle()
-        sleep_ms(200)
-        led.toggle()
 
 
 
