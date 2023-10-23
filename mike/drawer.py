@@ -26,7 +26,7 @@ class Drawer:
             move_canvas(self.motor_z, NEG_Z)
         self.move_to_point((0,0))
         self.motor_x.disable()
-        self.motor_x.disable()
+        self.motor_y.disable()
 
             
             
@@ -56,15 +56,12 @@ class Drawer:
         steps_x = (point[0] // LINEAR_STEP_XY) * MICRO_STEP
         steps_y = (point[1] // LINEAR_STEP_XY) * MICRO_STEP
         
-        print("X_pos:", x_pos)
-        print("Y_pos:", y_pos)
 
         # delta
         delta_x = steps_x - x_pos
         delta_y = steps_y - y_pos
         
-        print("delta_x:", delta_x)
-        print("delta_y:", delta_y)
+        
         
         print("Moving to point:", point)
 
@@ -79,6 +76,9 @@ class Drawer:
             y_dir = NEG_XY
         else:
             y_dir = POS_XY
+            
+        print("delta_x:", delta_x)
+        print("delta_y:", delta_y)
         
             
         #acceleration profile
@@ -219,4 +219,4 @@ def generate_acceleration_profile(total_x_distance, total_y_distance):
     
     # Try one quarter ratio e.g total steps is 100, finish accelerate by 25 steps and start decelerate at 75 steps
     magnitude = sqrt(total_x_distance**2 + total_y_distance**2)
-    return (round(magnitude * 1/5), round(magnitude * 4/5), magnitude)
+    return (round(magnitude * 3/6), round(magnitude * 5/6), magnitude)
