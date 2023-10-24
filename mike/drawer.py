@@ -1,10 +1,11 @@
 from util import Artwork, greatest_common_divisor
 from motor import *
 from utime import sleep_us, ticks_us, ticks_diff
-from math import sqrt
 
 class Drawer:
-
+    """
+    Class to handle the drawing functionality of the artbot
+    """
     def __init__(self, motor_x, motor_y, motor_z, artwork):
         
         self.motor_x: Motor = motor_x
@@ -28,21 +29,7 @@ class Drawer:
         self.motor_x.disable()
         self.motor_y.disable()
 
-            
-            
-
-    def segment_distance(self, segment):
-        # Segment distance in number of steps
-        x_total = 0
-        y_total = 0
-        start = segment[0]
-        for point in segment:
-            x_dist = abs((point[0] - start[0])) // LINEAR_STEP_XY
-            y_dist = abs((point[1] - start[1])) // LINEAR_STEP_XY
-            x_total += x_dist
-            y_total += y_dist
-            start = point
-        return (x_total, y_total)
+        
                
     def move_to_point(self, point):
     
@@ -79,13 +66,14 @@ class Drawer:
             y_inc = -(2*y_dir-1) / MICRO_STEP
        
 
-         # Find the smoothest path by linking a series of steps together
+        # Find the smoothest path by linking a series of steps together
         hgd = greatest_common_divisor(delta_x, delta_y)
         if hgd == 0:
             hgd = 1
         base = delta_x / hgd  # step in the x direction
         height = delta_y / hgd  # step in the y direction
 
+        # Calculates number of stairs needed to get to the point
         if base >= height:
             if base != 0:
                 num_stairs = delta_x // base
@@ -102,7 +90,8 @@ class Drawer:
         else:
             ratio = base / height
         
-       
+        # Adjusts speed of the motors depending on the x/y ratio to ensure
+        # Smooth motion during simultaneous x/y motor movement
         if ratio >= 1:
             x_speed = FINAL_SPEED
             y_speed = FINAL_SPEED / ratio
@@ -118,9 +107,13 @@ class Drawer:
         i = 0 # Stairs counter
         j = 0 # Base counter
         k = 0 # Height counter
+
         x_time = y_time = accel_timer = ticks_us()
+
+        # Calculate required x/y timer delays
         x_delay = round((1/x_speed)*1e06)
         y_delay = round((1/y_speed)*1e06)
+
         while (i < num_stairs):
             cur_time = ticks_us()
             if ticks_diff(cur_time, x_time) >= x_delay and j < base:
@@ -135,7 +128,6 @@ class Drawer:
                 k += 1
                 y_time = cur_time
 
-                
             if j == base and k == height:
                 j = 0
                 k = 0

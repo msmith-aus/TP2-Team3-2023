@@ -38,14 +38,15 @@ NEG_XY = 1
 POS_Z = 1
 NEG_Z = 0
 
-XY_CORRECTION = -1
-
 ### Pulse definition ###``
 STEP_PERIOD = 10 # us
 FINAL_SPEED = 3000  #PPS
 MICRO_STEP = 2 # HALF
 
 class Motor:
+    """ 
+    Class to keep track of motor parameters such as speed, pin values, position and direction.
+    """
     def __init__(self):
         self._enable = None
         self._step = None
@@ -67,7 +68,6 @@ class Motor:
         self._enable.value(1)
 
     def step_motor(self, direction: int):
-
         self._direction.value(direction)
         self._step.value(1)
         sleep_us(STEP_PERIOD)
@@ -120,7 +120,9 @@ def init_pins(motor_x: Motor, motor_y: Motor, motor_z: Motor):
     motor_z.disable()
 
 def move_canvas(motor_z, dir):
-    
+    """
+    Method to raise and lower the canvas
+    """
     motor_z.enable()
     print("Moving z stage")
     for _ in range(100):
@@ -129,7 +131,9 @@ def move_canvas(motor_z, dir):
     motor_z.disable()
         
 def step_forward(motor_x, motor_y):
-
+    """
+    Method to move the end-effector forward by 1mm in each axis
+    """
     motor_x.enable()
     motor_y.enable()
     for _ in range(800 * MICRO_STEP):
@@ -144,6 +148,8 @@ def step_forward(motor_x, motor_y):
     motor_y.disable()
         
 def to_start(motor_x, motor_y, motor_z):
+    """ Moves the end-effector to its starting position
+    """
     move_canvas(motor_z, NEG_Z)
     sleep_us(2000)
     step_forward(motor_x, motor_y)

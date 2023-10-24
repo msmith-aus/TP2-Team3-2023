@@ -2,10 +2,16 @@ from machine import Pin
 from utime import sleep_ms
 from motor import Motor, POS_XY, NEG_XY, STEPS_PER_REV_XY, NEG_Z, POS_Z, STEPS_PER_REV_Z, init_pins, move_canvas, to_start
 from util import Artwork
-from drawer import Drawer, generate_acceleration_profile
+from drawer import Drawer
 
 
 def read_in_artwork(path):
+    """ Method to read the artwork file
+    Artworks consist of a list of segments which are a list of points
+
+    Returns:
+        Artwork class instantiation
+    """
     artwork = Artwork()
     with open(path, "r") as file:
         print("Reading in file")
@@ -14,7 +20,7 @@ def read_in_artwork(path):
             line = line.strip()
             if line == '':
                 print("\n")
-                continue
+                continue=-
             if line == "START":
                 print("start")
                 segment = []
