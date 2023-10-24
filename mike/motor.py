@@ -40,7 +40,7 @@ NEG_Z = 0
 
 ### Pulse definition ###``
 STEP_PERIOD = 10 # us
-FINAL_SPEED = 3000  #PPS
+FINAL_SPEED = 3300  #PPS
 MICRO_STEP = 2 # HALF
 
 class Motor:

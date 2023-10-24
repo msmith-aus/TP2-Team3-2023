@@ -20,7 +20,7 @@ def read_in_artwork(path):
             line = line.strip()
             if line == '':
                 print("\n")
-                continue=-
+                continue
             if line == "START":
                 print("start")
                 segment = []
