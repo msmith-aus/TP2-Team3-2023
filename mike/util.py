@@ -7,6 +7,7 @@ DATE: 06/08/2023
 
 
 class Artwork:
+    """ Class to hold segments """
     def __init__(self):
         self.segments = []
 
