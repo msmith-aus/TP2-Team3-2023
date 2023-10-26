@@ -39,8 +39,8 @@ POS_Z = 1
 NEG_Z = 0
 
 ### Pulse definition ###``
-STEP_PERIOD = 10 # us
-FINAL_SPEED = 3300  #PPS
+STEP_PERIOD = 2 # us
+FINAL_SPEED = 2000  #PPS
 MICRO_STEP = 2 # HALF
 
 class Motor:
